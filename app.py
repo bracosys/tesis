@@ -1107,7 +1107,7 @@ def create_app():
             return jsonify({'error': 'Solo disponible en modo debug'})
     
 
-    # Crear base de datos y usuarios por defecto
+# Crear base de datos y usuarios por defecto
     with app.app_context():
         db.create_all()
         
@@ -1177,7 +1177,9 @@ def create_app():
     
     return app
 
-# Punto de entrada
+# Crear la instancia de la aplicación para producción
+app = create_app()
+
+# Punto de entrada para desarrollo
 if __name__ == '__main__':
-    app = create_app()
     app.run(debug=True)
