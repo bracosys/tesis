@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Administrar Vehículos - Sistema de Optimización de Rutas{% endblock %}
+
+{% block page_title %}Administrar Vehículos{% endblock %}
+
+{% block sidebar_items %}
+<li class="nav-item">
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-link">
+        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_routes') }}" class="nav-link">
+        <i class="fas fa-route me-2"></i> Rutas
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_users') }}" class="nav-link">
+        <i class="fas fa-users me-2"></i> Usuarios
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_vehicles') }}" class="nav-link active">
+        <i class="fas fa-truck me-2"></i> Vehículos
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Vehículos registrados</h6>
+        <a href="{{ url_for('add_vehicle') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuevo vehículo
+        </a>
+    </div>
+    <div class="card-body">
+        {% if vehicles %}
+        <div class="table-responsive">
+            <table class="table table-bordered" id="vehiclesTable">
+                <thead>
+                    <tr>
+                        <th>Marca</th>
+                        <th>Modelo</th>
+                        <th>Año</th>
+                        <th>Placa</th>
+                        <th>Fecha registro</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vehicle in vehicles %}
+                    <tr>
+                        <td>{{ vehicle.brand }}</td>
+                        <td>{{ vehicle.model }}</td>
+                        <td>{{ vehicle.year }}</td>
+                        <td>{{ vehicle.plate_number }}</td>
+                        <td>{{ vehicle.created_at|datetime_format }}</td>
+                        <td>
+                            {% if vehicle.active %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-info btn-sm">
+                                <i class="fas fa-eye"></i> Ver
+                            </button>
+                            <button type="button" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <p class="lead">No hay vehículos registrados.</p>
+            <a href="{{ url_for('add_vehicle') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Registrar primer vehículo
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#vehiclesTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            }
+        });
+    });
+</script>
+{% endblock %}

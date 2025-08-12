@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Administrador - Sistema de Optimización de Rutas{% endblock %}
+
+{% block page_title %}Panel de Administrador{% endblock %}
+
+{% block sidebar_items %}
+<li class="nav-item">
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-link active">
+        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_routes') }}" class="nav-link">
+        <i class="fas fa-route me-2"></i> Rutas
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_users') }}" class="nav-link">
+        <i class="fas fa-users me-2"></i> Usuarios
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_vehicles') }}" class="nav-link">
+        <i class="fas fa-truck me-2"></i> Vehículos
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Estadísticas -->
+    <div class="col-md-12">
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="card border-left-primary shadow h-100">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Usuarios registrados</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_users }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-users fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card border-left-success shadow h-100">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Choferes activos</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_drivers }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-car fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card border-left-info shadow h-100">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Vehículos registrados</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_vehicles }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-truck fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card border-left-warning shadow h-100">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Rutas generadas</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_routes }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-route fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rutas recientes -->
+    <div class="col-md-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Rutas recientes</h6>
+                <a href="{{ url_for('create_route') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Nueva ruta
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_routes and recent_routes|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Fecha de creación</th>
+                                <th>Distancia</th>
+                                <th>Creado por</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for route in recent_routes %}
+                            <tr>
+                                <td>{{ route.name if route.name else 'Sin nombre' }}</td>
+                                <td>{{ route.created_at|datetime_format if route.created_at else 'N/A' }}</td>
+                                <td>{{ route.distance|distance_format if route.distance else 'N/A' }}</td>
+                                <td>
+                                    {% if route.creator %}
+                                        {{ route.creator.first_name }} {{ route.creator.last_name }}
+                                    {% else %}
+                                        Desconocido
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin_view_route', route_id=route.id) }}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center">No hay rutas recientes.</p>
+                {% endif %}
+                
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('manage_routes') }}" class="btn btn-outline-primary">
+                        Ver todas las rutas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+</style>
+{% endblock %}

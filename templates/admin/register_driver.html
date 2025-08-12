@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Ver Chofer: {{ driver.first_name }} {{ driver.last_name }} - Sistema de Optimización de Rutas{% endblock %}
+
+{% block page_title %}Ver Chofer: {{ driver.first_name }} {{ driver.last_name }}{% endblock %}
+
+{% block sidebar_items %}
+<li class="nav-item">
+    <a href="{{ url_for('admin.dashboard') }}" class="nav-link">
+        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('admin.manage_routes') }}" class="nav-link">
+        <i class="fas fa-route me-2"></i> Rutas
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('admin.manage_drivers') }}" class="nav-link active">
+        <i class="fas fa-users me-2"></i> Choferes
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('admin.manage_vehicles') }}" class="nav-link">
+        <i class="fas fa-truck me-2"></i> Vehículos
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Información del chofer</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <img src="https://via.placeholder.com/150" class="rounded-circle img-thumbnail">
+                    <h5 class="mt-3">{{ driver.first_name }} {{ driver.last_name }}</h5>
+                    <p class="text-muted">{{ driver_info.license_type if driver_info else 'Sin licencia registrada' }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Nombre de usuario:</strong> {{ driver.username }}
+                </div>
+                <div class="mb-3">
+                    <strong>Email:</strong> {{ driver.email }}
+                </div>
+                <div class="mb-3">
+                    <strong>Cédula:</strong> {{ driver.cedula }}
+                </div>
+                <div class="mb-3">
+                    <strong>Fecha de registro:</strong> {{ driver.created_at|datetime_format }}
+                </div>
+                
+                {% if driver_info %}
+                <div class="mb-3">
+                    <strong>Tipo de licencia:</strong> {{ driver_info.license_type }}
+                </div>
+                <div class="mb-3">
+                    <strong>Estado:</strong> 
+                    {% if driver_info.active %}
+                    <span class="badge bg-success">Activo</span>
+                    {% else %}
+                    <span class="badge bg-danger">Inactivo</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('admin.manage_drivers') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                    <a href="{{ url_for('admin.assign_vehicle') }}?driver_id={{ driver.id }}" class="btn btn-primary">
+                        <i class="fas fa-truck"></i> Asignar vehículo
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Vehículo asignado</h6>
+            </div>
+            <div class="card-body">
+                {% if vehicle %}
+                <div class="mb-2">
+                    <strong>Marca:</strong> {{ vehicle.brand }}
+                </div>
+                <div class="mb-2">
+                    <strong>Modelo:</strong> {{ vehicle.model }}
+                </div>
+                <div class="mb-2">
+                    <strong>Año:</strong> {{ vehicle.year }}
+                </div>
+                <div class="mb-2">
+                    <strong>Placa:</strong> {{ vehicle.plate_number }}
+                </div>
+                {% else %}
+                <p class="text-center">No hay vehículo asignado actualmente.</p>
+                <div class="text-center">
+                    <a href="{{ url_for('admin.assign_vehicle') }}?driver_id={{ driver.id }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-truck"></i> Asignar vehículo
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Historial de rutas</h6>
+            </div>
+            <div class="card-body">
+                {% if route_history %}
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="routeHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Ruta</th>
+                                <th>Vehículo</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for completion in route_history %}
+                            <tr>
+                                <td>
+                                    {% if completion.completed_at %}
+                                        {{ completion.completed_at|datetime_format }}
+                                    {% elif completion.started_at %}
+                                        {{ completion.started_at|datetime_format }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>{{ completion.route.name }}</td>
+                                <td>{{ completion.vehicle.brand }} {{ completion.vehicle.model }} ({{ completion.vehicle.plate_number }})</td>
+                                <td>
+                                    {% if completion.status == 'completed' %}
+                                    <span class="badge bg-success">Completado</span>
+                                    {% elif completion.status == 'in_progress' %}
+                                    <span class="badge bg-warning">En progreso</span>
+                                    {% elif completion.status == 'canceled' %}
+                                    <span class="badge bg-danger">Cancelado</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Pendiente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.view_route', route_id=completion.route.id) }}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> Ver ruta
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center">Este chofer aún no ha completado ninguna ruta.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#routeHistoryTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            },
+            order: [[0, 'desc']]
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Historial de Rutas - Sistema de Optimización de Rutas{% endblock %}
+
+{% block page_title %}Mi Historial de Rutas{% endblock %}
+
+{% block sidebar_items %}
+<li class="nav-item">
+    <a href="{{ url_for('driver_dashboard') }}" class="nav-link">
+        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('driver_route_history') }}" class="nav-link active">
+        <i class="fas fa-history me-2"></i> Historial de rutas
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Historial de rutas completadas</h6>
+    </div>
+    <div class="card-body">
+        {% if completions %}
+        <div class="table-responsive">
+            <table class="table table-bordered" id="historyTable">
+                <thead>
+                    <tr>
+                        <th>Fecha inicio</th>
+                        <th>Fecha fin</th>
+                        <th>Ruta</th>
+                        <th>Vehículo</th>
+                        <th>Estado</th>
+                        <th>Duración</th>
+                        <th>Notas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for completion in completions %}
+                    <tr>
+                        <td>
+                            {% if completion.started_at %}
+                                {{ completion.started_at|datetime_format }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if completion.completed_at %}
+                                {{ completion.completed_at|datetime_format }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ completion.route.name if completion.route else 'Ruta eliminada' }}</td>
+                        <td>
+                            {% if completion.vehicle %}
+                                {{ completion.vehicle.brand }} {{ completion.vehicle.model }} ({{ completion.vehicle.plate_number }})
+                            {% else %}
+                                Vehículo eliminado
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if completion.status == 'completed' %}
+                            <span class="badge bg-success">Completado</span>
+                            {% elif completion.status == 'in_progress' %}
+                            <span class="badge bg-warning">En progreso</span>
+                            {% elif completion.status == 'canceled' %}
+                            <span class="badge bg-danger">Cancelado</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if completion.started_at and completion.completed_at %}
+                                {% set duration = completion.completed_at - completion.started_at %}
+                                {% set hours = duration.total_seconds() // 3600 %}
+                                {% set minutes = (duration.total_seconds() % 3600) // 60 %}
+                                {{ hours|int }}h {{ minutes|int }}m
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if completion.notes %}
+                                <span title="{{ completion.notes }}" data-bs-toggle="tooltip">
+                                    {{ completion.notes|truncate(30) }}
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-route fa-3x text-gray-300 mb-3"></i>
+            <p class="lead">Aún no has completado ninguna ruta.</p>
+            <a href="{{ url_for('driver_dashboard') }}" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-2"></i> Volver al dashboard
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if completions %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Estadísticas</h6>
+            </div>
+            <div class="card-body">
+                {% set completed_count = completions|selectattr("status", "equalto", "completed")|list|length %}
+                {% set canceled_count = completions|selectattr("status", "equalto", "canceled")|list|length %}
+                {% set total_count = completions|length %}
+                
+                <div class="mb-2">
+                    <strong>Total de recorridos:</strong> {{ total_count }}
+                </div>
+                <div class="mb-2">
+                    <strong>Completados:</strong> 
+                    <span class="badge bg-success">{{ completed_count }}</span>
+                </div>
+                <div class="mb-2">
+                    <strong>Cancelados:</strong> 
+                    <span class="badge bg-danger">{{ canceled_count }}</span>
+                </div>
+                {% if total_count > 0 %}
+                <div class="mt-3">
+                    <strong>Tasa de éxito:</strong> 
+                    {{ "%.1f"|format((completed_count / total_count * 100)) }}%
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Acciones</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('driver_dashboard') }}" class="btn btn-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i> Ir al dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#historyTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            },
+            order: [[0, 'desc']]
+        });
+        
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios - Optimización de Rutas</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gestión de Usuarios</h1>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}class="active"{% endif %}>Inicio</a></li>
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.role == 'admin' %}
+                            <li><a href="{{ url_for('create_route') }}" {% if request.endpoint == 'create_route' %}class="active"{% endif %}>Crear Ruta</a></li>
+                            <li><a href="{{ url_for('vehicles') }}" {% if request.endpoint == 'vehicles' or request.endpoint == 'add_vehicle' or request.endpoint == 'edit_vehicle' %}class="active"{% endif %}>Gestión de Vehículos</a></li>
+                            <li><a href="{{ url_for('users') }}" {% if request.endpoint == 'users' or request.endpoint == 'edit_user' %}class="active"{% endif %}>Gestión de Usuarios</a></li>
+                            <li><a href="{{ url_for('register') }}" {% if request.endpoint == 'register' %}class="active"{% endif %}>Registrar Usuario</a></li>
+                        {% endif %}
+                        <li><a href="{{ url_for('completed_routes') }}" {% if request.endpoint == 'completed_routes' %}class="active"{% endif %}>Rutas Completadas</a></li>
+                        <li><a href="{{ url_for('logout') }}">Cerrar Sesión ({{ current_user.username }})</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('login') }}" {% if request.endpoint == 'login' %}class="active"{% endif %}>Iniciar Sesión</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="admin-panel">
+                <h2>Usuarios Registrados</h2>
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-add">Agregar Nuevo Usuario</a>
+                
+                {% if users %}
+                    <div class="users-list">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre de Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                    <tr>
+                                        <td>{{ user.username }}</td>
+                                        <td>
+                                            {% if user.role == 'admin' %}
+                                                <span class="badge badge-admin">Administrador</span>
+                                            {% else %}
+                                                <span class="badge badge-driver">Chofer</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="actions">
+                                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-edit">Editar</a>
+                                            <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" class="delete-form" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.');">
+                                                <button type="submit" class="btn btn-delete">Eliminar</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="no-items">No hay otros usuarios registrados.</p>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; {{ current_year }} Sistema de Optimización de Rutas</p>
+        </footer>
+    </div>
+</body>
+</html>

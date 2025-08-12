@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Administrar Rutas - Sistema de Optimización de Rutas{% endblock %}
+
+{% block page_title %}Administrar Rutas{% endblock %}
+
+{% block sidebar_items %}
+<li class="nav-item">
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-link">
+        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_routes') }}" class="nav-link active">
+        <i class="fas fa-route me-2"></i> Rutas
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_users') }}" class="nav-link">
+        <i class="fas fa-users me-2"></i> Usuarios
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_vehicles') }}" class="nav-link">
+        <i class="fas fa-truck me-2"></i> Vehículos
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Rutas registradas</h6>
+        <a href="{{ url_for('create_route') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva ruta
+        </a>
+    </div>
+    <div class="card-body">
+        {% if routes %}
+        <div class="table-responsive">
+            <table class="table table-bordered" id="routesTable">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Fecha de creación</th>
+                        <th>Distancia</th>
+                        <th>Creado por</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for route in routes %}
+                    <tr>
+                        <td>{{ route.name if route.name else 'Sin nombre' }}</td>
+                        <td>{{ route.description|truncate(30) if route.description else 'Sin descripción' }}</td>
+                        <td>{{ route.created_at|datetime_format if route.created_at else 'N/A' }}</td>
+                        <td>{{ route.distance|distance_format if route.distance else 'N/A' }}</td>
+                        <td>{{ route.creator.first_name + ' ' + route.creator.last_name if route.creator else 'Desconocido' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_view_route', route_id=route.id) }}" class="btn btn-info btn-sm">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteRouteModal{{ route.id }}">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                            
+                            <!-- Modal de confirmación de eliminación -->
+                            <div class="modal fade" id="deleteRouteModal{{ route.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Confirmar eliminación</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            ¿Estás seguro de que deseas eliminar la ruta <strong>{{ route.name }}</strong>?
+                                            Esta acción no se puede deshacer.
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <form action="{{ url_for('delete_route', route_id=route.id) }}" method="POST">
+                                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <p class="lead">No hay rutas registradas.</p>
+            <a href="{{ url_for('admin.create_route') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Crear primera ruta
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#routesTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            },
+            order: [[2, 'desc']]
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+{% endblock %}

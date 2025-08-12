@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Nueva Ruta - Sistema de Optimización de Rutas{% endblock %}
+
+{% block page_title %}Crear Nueva Ruta{% endblock %}
+
+{% block sidebar_items %}
+<li class="nav-item">
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-link">
+        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_routes') }}" class="nav-link active">
+        <i class="fas fa-route me-2"></i> Rutas
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_users') }}" class="nav-link">
+        <i class="fas fa-users me-2"></i> Usuarios
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_vehicles') }}" class="nav-link">
+        <i class="fas fa-truck me-2"></i> Vehículos
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Crear nueva ruta</h6>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('create_route') }}" method="POST" enctype="multipart/form-data">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="route_name" class="form-label">Nombre de la ruta *</label>
+                    <input type="text" class="form-control" id="route_name" name="route_name" required>
+                    <div class="form-text">Elige un nombre descriptivo para identificar fácilmente esta ruta.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="gpx_files" class="form-label">Archivos GPX *</label>
+                    <input type="file" class="form-control" id="gpx_files" name="gpx_files" accept=".gpx" multiple required>
+                    <div class="form-text">Puedes seleccionar múltiples archivos GPX para combinar en una ruta.</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="route_description" class="form-label">Descripción</label>
+                <textarea class="form-control" id="route_description" name="route_description" rows="3"></textarea>
+                <div class="form-text">Añade una descripción opcional para esta ruta.</div>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> El sistema analizará los archivos GPX y generará la ruta optimizada automáticamente.
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ url_for('manage_routes') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Crear Ruta
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Guía para archivos GPX</h6>
+    </div>
+    <div class="card-body">
+        <p>Los archivos GPX (GPS Exchange Format) son un formato estándar que contiene datos de rutas GPS. Puedes obtenerlos de diversas formas:</p>
+        
+        <ul>
+            <li>Exportando rutas desde aplicaciones como Google Maps, Strava, o MapMyRide</li>
+            <li>Descargando recorridos prefijados de sitios de mapas</li>
+            <li>Grabando tu propio recorrido con un dispositivo GPS o aplicación móvil</li>
+        </ul>
+        
+        <p>Para mejores resultados:</p>
+        <ul>
+            <li>Asegúrate de que el archivo GPX contiene una secuencia coherente de puntos</li>
+            <li>Verifica que el punto de inicio y fin estén claramente definidos</li>
+            <li>Si combinas múltiples archivos, estos se procesarán en el orden en que los subas</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

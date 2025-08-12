@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Usuario - Optimización de Rutas</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Optimización de Rutas</h1>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                    {% if current_user.role == 'admin' %}
+                        <li><a href="{{ url_for('create_route') }}">Crear Ruta</a></li>
+                        <li><a href="{{ url_for('vehicles') }}">Gestión de Vehículos</a></li>
+                        <li><a href="{{ url_for('users') }}">Gestión de Usuarios</a></li>
+                        <li><a href="{{ url_for('register') }}" class="active">Registrar Usuario</a></li>
+                    {% endif %}
+                    <li><a href="{{ url_for('completed_routes') }}">Rutas Completadas</a></li>
+                    <li><a href="{{ url_for('logout') }}">Cerrar Sesión ({{ current_user.username }})</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="auth-form">
+                <h2>Registrar Nuevo Usuario</h2>
+                <p class="admin-note">Panel de administración - Creación de usuarios</p>
+                <form action="{{ url_for('register') }}" method="POST">
+                    <div class="form-group">
+                        <label for="username">Usuario:</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Rol:</label>
+                        <select id="role" name="role" required>
+                            <option value="admin">Administrador</option>
+                            <option value="chofer" selected>Chofer</option>
+                        </select>
+                    </div>
+                    <div class="form-buttons">
+                        <a href="{{ url_for('users') }}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Registrar Usuario</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; {{ current_year }} Sistema de Optimización de Rutas</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Administrar Usuarios - Sistema de Optimización de Rutas{% endblock %}
+
+{% block page_title %}Administrar Usuarios{% endblock %}
+
+{% block sidebar_items %}
+<li class="nav-item">
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-link">
+        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_users') }}" class="nav-link active">
+        <i class="fas fa-users me-2"></i> Usuarios
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_routes') }}" class="nav-link">
+        <i class="fas fa-route me-2"></i> Rutas
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('manage_vehicles') }}" class="nav-link">
+        <i class="fas fa-truck me-2"></i> Vehículos
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Usuarios registrados</h6>
+        <a href="{{ url_for('create_user') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuevo usuario
+        </a>
+    </div>
+    <div class="card-body">
+        {% if users %}
+        <div class="table-responsive">
+            <table class="table table-bordered" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Email</th>
+                        <th>Cédula</th>
+                        <th>Rol</th>
+                        <th>Fecha registro</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="{% if not user.active %}table-secondary{% endif %}">
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.first_name }}</td>
+                        <td>{{ user.last_name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.cedula }}</td>
+                        <td>
+                            {% if user.role == 'admin' %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-crown me-1"></i>Administrador
+                                </span>
+                            {% elif user.role == 'technician' %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-tools me-1"></i>Técnico
+                                </span>
+                            {% elif user.role == 'coordinator' %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-clipboard-list me-1"></i>Coordinador
+                                </span>
+                            {% elif user.role == 'driver' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-car me-1"></i>Chofer
+                                    {% if user.driver_info and user.driver_info.license_type %}
+                                        ({{ user.driver_info.license_type }})
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ user.role|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.created_at|datetime_format }}</td>
+                        <td>
+                            {% if user.active %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cogs"></i> Acciones
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ url_for('change_user_password', user_id=user.id) }}">
+                                            <i class="fas fa-key me-2"></i>Cambiar contraseña
+                                        </a>
+                                    </li>
+                                    {% if user.role == 'driver' %}
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="viewDriverDetails({{ user.id }})">
+                                            <i class="fas fa-eye me-2"></i>Ver detalles de chofer
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('toggle_user_status', user_id=user.id) }}" style="display: inline;">
+                                            {% if user.active %}
+                                            <button type="submit" class="dropdown-item text-warning" onclick="return confirm('¿Estás seguro de que deseas desactivar este usuario?')">
+                                                <i class="fas fa-pause me-2"></i>Desactivar
+                                            </button>
+                                            {% else %}
+                                            <button type="submit" class="dropdown-item text-success" onclick="return confirm('¿Estás seguro de que deseas activar este usuario?')">
+                                                <i class="fas fa-play me-2"></i>Activar
+                                            </button>
+                                            {% endif %}
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <p class="lead">No hay usuarios registrados.</p>
+            <a href="{{ url_for('create_user') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Crear primer usuario
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="card border-left-danger shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Administradores</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ users|selectattr("role", "equalto", "admin")|list|length }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-crown fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-left-warning shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Técnicos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ users|selectattr("role", "equalto", "technician")|list|length }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tools fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-left-info shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Coordinadores</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ users|selectattr("role", "equalto", "coordinator")|list|length }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-left-success shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Choferes</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ users|selectattr("role", "equalto", "driver")|list|length }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-car fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<style>
+    .border-left-danger {
+        border-left: 0.25rem solid #e74a3b !important;
+    }
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#usersTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            },
+            order: [[5, 'asc'], [1, 'asc']]  // Ordenar por rol y luego por nombre
+        });
+    });
+
+    function viewDriverDetails(userId) {
+        // Esta función podría expandirse para mostrar más detalles del chofer
+        // Por ahora, redirige a una página de detalles (que necesitarías crear)
+        alert('Funcionalidad de detalles del chofer - Usuario ID: ' + userId);
+        // window.location.href = '/admin/driver/' + userId;
+    }
+</script>
+{% endblock %}

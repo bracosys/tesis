@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Técnico - Sistema de Optimización de Rutas{% endblock %}
+
+{% block page_title %}Panel de Técnico{% endblock %}
+
+{% block sidebar_items %}
+<li class="nav-item">
+    <a href="{{ url_for('technician_dashboard') }}" class="nav-link active">
+        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Gestión de Usuarios</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Como técnico, puedes cambiar contraseñas de usuarios y ocultar/mostrar usuarios (excepto administradores).
+                </div>
+                
+                {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr class="{% if not user.active %}table-secondary{% endif %}">
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    {% if user.role == 'admin' %}
+                                        <span class="badge bg-danger">Administrador</span>
+                                    {% elif user.role == 'technician' %}
+                                        <span class="badge bg-warning">Técnico</span>
+                                    {% elif user.role == 'coordinator' %}
+                                        <span class="badge bg-info">Coordinador</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Chofer</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.active %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Oculto</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('change_user_password', user_id=user.id) }}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-key"></i> Cambiar contraseña
+                                    </a>
+                                    
+                                    {% if not user.is_admin and user.id != current_user.id %}
+                                    <form method="POST" action="{{ url_for('toggle_user_status', user_id=user.id) }}" style="display: inline;">
+                                        {% if user.active %}
+                                        <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('¿Estás seguro de que deseas ocultar este usuario?')">
+                                            <i class="fas fa-eye-slash"></i> Ocultar
+                                        </button>
+                                        {% else %}
+                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('¿Estás seguro de que deseas activar este usuario?')">
+                                            <i class="fas fa-eye"></i> Activar
+                                        </button>
+                                        {% endif %}
+                                    </form>
+                                    {% else %}
+                                    <span class="text-muted">No disponible</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center">No hay usuarios registrados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#usersTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+{% endblock %}

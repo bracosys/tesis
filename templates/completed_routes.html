@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rutas Completadas - Optimización de Rutas</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Rutas Completadas</h1>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}class="active"{% endif %}>Inicio</a></li>
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.role == 'admin' %}
+                            <li><a href="{{ url_for('create_route') }}" {% if request.endpoint == 'create_route' %}class="active"{% endif %}>Crear Ruta</a></li>
+                            <li><a href="{{ url_for('vehicles') }}" {% if request.endpoint == 'vehicles' or request.endpoint == 'add_vehicle' or request.endpoint == 'edit_vehicle' %}class="active"{% endif %}>Gestión de Vehículos</a></li>
+                            <li><a href="{{ url_for('users') }}" {% if request.endpoint == 'users' or request.endpoint == 'edit_user' %}class="active"{% endif %}>Gestión de Usuarios</a></li>
+                            <li><a href="{{ url_for('register') }}" {% if request.endpoint == 'register' %}class="active"{% endif %}>Registrar Usuario</a></li>
+                        {% endif %}
+                        <li><a href="{{ url_for('completed_routes') }}" {% if request.endpoint == 'completed_routes' %}class="active"{% endif %}>Rutas Completadas</a></li>
+                        <li><a href="{{ url_for('logout') }}">Cerrar Sesión ({{ current_user.username }})</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('login') }}" {% if request.endpoint == 'login' %}class="active"{% endif %}>Iniciar Sesión</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="completed-routes">
+                <h2>Historial de Rutas Completadas</h2>
+                
+                {% if completed_routes %}
+                    <div class="routes-list">
+                        {% for route in completed_routes %}
+                            <div class="completed-route-item">
+                                <div class="route-header">
+                                    <div class="route-title">{{ route.map.name }}</div>
+                                    <div class="route-date">{{ route.completed_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                                </div>
+                                
+                                <div class="route-details">
+                                    <div class="route-detail">
+                                        <div class="detail-label">Chofer</div>
+                                        <div class="detail-value">{{ route.driver.username }}</div>
+                                    </div>
+                                    
+                                    <div class="route-detail">
+                                        <div class="detail-label">Vehículo</div>
+                                        <div class="detail-value">
+                                            {% if route.vehicle_info %}
+                                                <span class="vehicle-badge">
+                                                    {{ route.vehicle_info.marca }} {{ route.vehicle_info.modelo }} ({{ route.vehicle_info.year }})
+                                                </span>
+                                            {% else %}
+                                                <span class="vehicle-badge">No especificado</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="route-actions">
+                                    <a href="{{ url_for('view_map', map_id=route.map.id) }}" class="btn btn-secondary">Ver Mapa</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="no-items">No hay rutas completadas registradas.</p>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; {{ current_year }} Sistema de Optimización de Rutas</p>
+        </footer>
+    </div>
+</body>
+</html>

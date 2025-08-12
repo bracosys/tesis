@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Recorridos - Sistema de Optimización de Rutas{% endblock %}
+
+{% block page_title %}Historial de Recorridos{% endblock %}
+
+{% block sidebar_items %}
+<li class="nav-item">
+    <a href="{{ url_for('coordinador_dashboard') }}" class="nav-link">
+        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('coordinador_routes') }}" class="nav-link">
+        <i class="fas fa-route me-2"></i> Ver rutas
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('coordinador_completions') }}" class="nav-link active">
+        <i class="fas fa-check-circle me-2"></i> Recorridos
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Historial completo de recorridos</h6>
+    </div>
+    <div class="card-body">
+        {% if completions %}
+        <div class="table-responsive">
+            <table class="table table-bordered" id="completionsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Chofer</th>
+                        <th>Ruta</th>
+                        <th>Vehículo</th>
+                        <th>Fecha inicio</th>
+                        <th>Fecha fin</th>
+                        <th>Estado</th>
+                        <th>Notas</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for completion in completions %}
+                    <tr>
+                        <td>{{ completion.id }}</td>
+                        <td>{{ completion.driver.first_name }} {{ completion.driver.last_name }}</td>
+                        <td>{{ completion.route.name }}</td>
+                        <td>{{ completion.vehicle.brand }} {{ completion.vehicle.model }}<br>
+                            <small class="text-muted">{{ completion.vehicle.plate_number }}</small>
+                        </td>
+                        <td>
+                            {% if completion.started_at %}
+                                {{ completion.started_at|datetime_format }}
+                            {% else %}
+                                <span class="text-muted">No iniciado</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if completion.completed_at %}
+                                {{ completion.completed_at|datetime_format }}
+                            {% else %}
+                                <span class="text-muted">No completado</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if completion.status == 'completed' %}
+                            <span class="badge bg-success">Completado</span>
+                            {% elif completion.status == 'in_progress' %}
+                            <span class="badge bg-warning">En progreso</span>
+                            {% elif completion.status == 'canceled' %}
+                            <span class="badge bg-danger">Cancelado</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if completion.notes %}
+                                <button class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" 
+                                        title="{{ completion.notes }}">
+                                    <i class="fas fa-comment"></i> Ver
+                                </button>
+                            {% else %}
+                                <span class="text-muted">Sin notas</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('coordinador_view_route', route_id=completion.route.id) }}" 
+                               class="btn btn-info btn-sm">
+                                <i class="fas fa-map"></i> Ver ruta
+                            </a>
+                            {% if completion.track_data %}
+                            <button class="btn btn-success btn-sm" onclick="showTrackData({{ completion.id }})">
+                                <i class="fas fa-route"></i> Track
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+            <p class="lead">No hay recorridos registrados en el sistema.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estadísticas de recorridos -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body">
+                <div class="text-lg font-weight-bold">
+                    {{ completions|selectattr('status', 'equalto', 'canceled')|list|length }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white shadow">
+            <div class="card-body">
+                <div class="text-white-50 small">Pendientes</div>
+                <div class="text-lg font-weight-bold">
+                    {{ completions|selectattr('status', 'equalto', 'pending')|list|length }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mostrar datos de tracking -->
+<div class="modal fade" id="trackDataModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Datos de seguimiento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="trackDataContent">
+                    <!-- El contenido se cargará dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializar DataTable
+        $('#completionsTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json'
+            },
+            order: [[4, 'desc']], // Ordenar por fecha de inicio descendente
+            pageLength: 15,
+            columnDefs: [
+                { orderable: false, targets: [8] } // La columna de acciones no es ordenable
+            ]
+        });
+
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+
+    function showTrackData(completionId) {
+        // Aquí podrías hacer una llamada AJAX para obtener los datos de tracking
+        // Por ahora, mostraremos un mensaje simple
+        $('#trackDataContent').html(`
+            <div class="alert alert-info">
+                <h6>Datos de seguimiento para recorrido #${completionId}</h6>
+                <p>Esta función mostraría los puntos GPS registrados durante el recorrido.</p>
+                <p><strong>Funcionalidad a implementar:</strong></p>
+                <ul>
+                    <li>Mapa con la ruta recorrida</li>
+                    <li>Puntos de tracking con timestamps</li>
+                    <li>Velocidad promedio</li>
+                    <li>Tiempo total del recorrido</li>
+                    <li>Desviaciones de la ruta planificada</li>
+                </ul>
+            </div>
+        `);
+        
+        $('#trackDataModal').modal('show');
+    }
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<style>
+    .text-lg {
+        font-size: 1.5rem;
+    }
+</style>
+{% endblock %} class="text-white-50 small">Completados</div>
+                <div class="text-lg font-weight-bold">
+                    {{ completions|selectattr('status', 'equalto', 'completed')|list|length }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white shadow">
+            <div class="card-body">
+                <div class="text-white-50 small">En progreso</div>
+                <div class="text-lg font-weight-bold">
+                    {{ completions|selectattr('status', 'equalto', 'in_progress')|list|length }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white shadow">
+            <div class="card-body">
+                <div class="text-white-50 small">Cancelados</div>
+                <div

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmar Eliminación - Optimización de Rutas</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .warning-panel {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .delete-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .btn-confirm-delete {
+            background-color: #dc3545;
+        }
+        
+        .btn-confirm-delete:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Confirmar Eliminación</h1>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}class="active"{% endif %}>Inicio</a></li>
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.role == 'admin' %}
+                            <li><a href="{{ url_for('create_route') }}" {% if request.endpoint == 'create_route' %}class="active"{% endif %}>Crear Ruta</a></li>
+                            <li><a href="{{ url_for('vehicles') }}" {% if request.endpoint == 'vehicles' or request.endpoint == 'add_vehicle' or request.endpoint == 'edit_vehicle' %}class="active"{% endif %}>Gestión de Vehículos</a></li>
+                            <li><a href="{{ url_for('users') }}" {% if request.endpoint == 'users' or request.endpoint == 'edit_user' %}class="active"{% endif %}>Gestión de Usuarios</a></li>
+                            <li><a href="{{ url_for('register') }}" {% if request.endpoint == 'register' %}class="active"{% endif %}>Registrar Usuario</a></li>
+                        {% endif %}
+                        <li><a href="{{ url_for('completed_routes') }}" {% if request.endpoint == 'completed_routes' %}class="active"{% endif %}>Rutas Completadas</a></li>
+                        <li><a href="{{ url_for('logout') }}">Cerrar Sesión ({{ current_user.username }})</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('login') }}" {% if request.endpoint == 'login' %}class="active"{% endif %}>Iniciar Sesión</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <div class="auth-form">
+                <h2>Confirmar Eliminación de Ruta</h2>
+                <p>Estás a punto de eliminar la ruta <strong>"{{ map_data.name }}"</strong>.</p>
+                
+                <div class="warning-panel">
+                    <h3>¡Atención!</h3>
+                    <p>Esta ruta tiene <strong>{{ completed_count }}</strong> recorridos completados asociados.</p>
+                    <p>Si continúas, se eliminarán todos los datos de recorridos completados de esta ruta.</p>
+                    <p>Esta acción no se puede deshacer.</p>
+                </div>
+                
+                <div class="delete-buttons">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+                    <form action="{{ url_for('delete_map', map_id=map_data.id) }}" method="POST">
+                        <button type="submit" class="btn btn-confirm-delete">Confirmar Eliminación</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; {{ current_year }} Sistema de Optimización de Rutas</p>
+        </footer>
+    </div>
+</body>
+</html>
