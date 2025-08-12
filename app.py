@@ -10,6 +10,12 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv no está disponible, usar variables de entorno del sistema
+
 import gpxpy
 import networkx as nx
 from geopy.distance import geodesic
@@ -193,11 +199,25 @@ def optimize_route(file_paths):
 def create_app():
     app = Flask(__name__)
     
-    # Configuración
-    app.config['SECRET_KEY'] = 'clave_secreta_para_flask'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+    # Configuración que funciona tanto en desarrollo como en producción
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'clave_secreta_para_desarrollo')
+    
+    # Base de datos: PostgreSQL en producción, SQLite en desarrollo
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url and database_url.startswith('postgres://'):
+        # Render usa postgres:// pero SQLAlchemy necesita postgresql://
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///app.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = './uploads'
+    
+    # Configuración para producción
+    if os.environ.get('FLASK_ENV') == 'production':
+        app.config['DEBUG'] = False
+        app.config['TESTING'] = False
+    else:
+        app.config['DEBUG'] = True
     
     # Crear directorios necesarios
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
